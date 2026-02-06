@@ -1,0 +1,29 @@
+=== POLICY TRACKER: SHARING & STARTUP GUIDE ===
+
+Follow these steps EVERY time you open your PC or start a new session:
+
+1. OPEN TERMINAL:
+   - Go to: C:\Users\yash\.gemini\antigravity\scratch\policy-tracker
+   - (In PyCharm: Click the 'Terminal' tab at the bottom).
+
+2. START LOCAL SERVER:
+   Run this command to start the server:
+   python -m http.server 8000
+
+3. FIND YOUR IP ADDRESS (For Local Network Sharing):
+   - Open a SECOND terminal window.
+   - Run: ipconfig
+   - Look for the 'IPv4 Address' (usually starts with 192.168.x.x).
+
+4. PUBLIC SHARING (NGROK):
+   If sharing with someone outside your Wi-Fi (e.g., on mobile data):
+   - In a NEW terminal, run:
+     ngrok http 8000
+   - Copy the 'Forwarding' URL (starts with https:// and ends in .ngrok-free.app).
+
+5. ACCESS LINKS:
+   - On Your PC: http://localhost:8000/standalone.html
+   - On Your Wi-Fi: http://YOUR_IP_ADDRESS:8000/standalone.html
+   - Publicly: [NGROK_URL]/standalone.html
+
+IMPORTANT: Keep the terminal windows OPEN. If you close the terminal, the website will stop working.

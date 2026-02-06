@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policy Tracker - NITI Aayog</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #60a5fa;
+            --secondary: #64748b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #475569;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --tag-bg: #f1f5f9;
+            --tag-text: #475569;
+            --lan-bg: #fef3c7;
+            --lan-text: #92400e;
+            --radius: 12px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--background);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 320px;
+            background-color: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem 3rem;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--background);
+            font-size: 14px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .filter-group h3 {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+
+        .filter-item:hover {
+            background: var(--background);
+        }
+
+        .filter-item.active {
+            color: var(--primary);
+            font-weight: 600;
+            background: #eff6ff;
+        }
+
+        .filter-item input {
+            accent-color: var(--primary);
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 0.6rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--background);
+            font-size: 13px;
+        }
+
+        /* Grid & Cards */
+        .policy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-light);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .badge-sector {
+            background: #eff6ff;
+            color: var(--primary);
+        }
+
+        .badge-state {
+            background: #ecfdf5;
+            color: var(--success);
+        }
+
+        .badge-year {
+            background: #f3f4f6;
+            color: var(--secondary);
+        }
+
+        .badge-lan {
+            background: var(--lan-bg);
+            color: var(--lan-text);
+        }
+
+        .badge-org {
+            background: #fdf2f2;
+            color: #9b1c1c;
+        }
+
+        .badge-type {
+            background: #f5f3ff;
+            color: #5b21b6;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+
+        .tag {
+            font-size: 10px;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            transition: 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            background: white;
+            width: 95%;
+            height: 95%;
+            border-radius: 12px;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 32px;
+            cursor: pointer;
+            color: var(--secondary);
+        }
+
+        @media (max-width: 768px) {
+            .app-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i data-lucide="shield" style="color: var(--primary);"></i>
+                <h1 style="font-size: 1.2rem; font-weight: 800;">POLICY TRACKER</h1>
+            </div>
+
+            <div class="search-container">
+                <i data-lucide="search" class="search-icon" size="16"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search title or summary...">
+            </div>
+
+            <div class="filter-group">
+                <h3><i data-lucide="building-2" size="14"></i> Organisation</h3>
+                <select id="orgFilter" class="filter-select"></select>
+            </div>
+
+            <div class="filter-group">
+                <h3><i data-lucide="layers" size="14"></i> Subsector</h3>
+                <select id="subsectorFilter" class="filter-select"></select>
+            </div>
+
+            <div class="filter-group">
+                <h3><i data-lucide="map-pin" size="14"></i> State</h3>
+                <select id="stateFilter" class="filter-select"></select>
+            </div>
+
+            <div class="filter-group">
+                <h3><i data-lucide="file-type" size="14"></i> Content Type</h3>
+                <div id="typeFilters" class="filter-list"></div>
+            </div>
+
+            <div class="filter-group">
+                <h3><i data-lucide="globe" size="14"></i> Language</h3>
+                <div id="lanFilters" class="filter-list"></div>
+            </div>
+
+            <div class="filter-group">
+                <h3><i data-lucide="calendar" size="14"></i> Year</h3>
+                <select id="yearFilter" class="filter-select"></select>
+            </div>
+
+            <div class="filter-group">
+                <h3><i data-lucide="tag" size="14"></i> Keywords</h3>
+                <div id="tagFilters" class="tag-list"
+                    style="max-height: 100px; overflow-y: auto; padding: 0.5rem; background: var(--background); border-radius: 6px;">
+                </div>
+            </div>
+
+            <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
+                <button class="btn btn-outline" style="width: 100%;"
+                    onclick="document.getElementById('fileInput').click()">
+                    <i data-lucide="file-plus"></i> Manual Upload (.xlsx)
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+                <div>
+                    <h2 id="resultCount" style="font-size: 1.5rem; font-weight: 700;">Loading...</h2>
+                    <p id="statusMsg" style="font-size: 13px; color: var(--text-secondary);"></p>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-outline" onclick="clearFilters()">Reset</button>
+                    <button class="btn btn-primary" onclick="init()">Refresh</button>
+                </div>
+            </header>
+
+            <div id="policyGrid" class="policy-grid"></div>
+        </main>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <iframe id="pdfFrame" style="width: 100%; height: 100%; border: none; border-radius: 8px;"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let filters = { org: 'All', sub: 'All', state: 'All', type: 'All', lan: 'All', year: 'All', search: '', tags: [] };
+
+        async function init() {
+            lucide.createIcons();
+            console.log("Initializing Policy Tracker...");
+
+            if (typeof XLSX === 'undefined') {
+                console.error("SheetJS (XLSX) not found!");
+                document.getElementById('statusMsg').innerHTML = '<span style="color:var(--danger)">Error: SheetJS library failed to load. Please check your internet connection.</span>';
+                document.getElementById('resultCount').innerText = "Error";
+                return;
+            }
+
+            const cached = localStorage.getItem('policy_tracker_vITI');
+            if (cached) {
+                try {
+                    allData = JSON.parse(cached);
+                    console.log("Loaded " + allData.length + " items from cache");
+                    updateUI("Loaded from cache");
+                } catch (e) {
+                    console.error("Cache parse error:", e);
+                }
+            }
+
+            try {
+                const res = await fetch('./data.xlsx');
+                if (res.ok) {
+                    console.log("Found data.xlsx, processing...");
+                    const buf = await res.arrayBuffer();
+                    processData(buf);
+                    updateUI("Auto-loaded data.xlsx");
+                } else {
+                    console.warn("data.xlsx not found (404).");
+                    if (!allData.length) renderEmpty();
+                }
+            } catch (e) {
+                console.error("Fetch error:", e);
+                if (!allData.length) renderEmpty();
+            }
+        }
+
+        function processData(data) {
+            try {
+                const wb = XLSX.read(data, { type: 'array' });
+                if (!wb.SheetNames.length) throw new Error("Excel file is empty.");
+
+                const sheet = wb.Sheets[wb.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet);
+
+                if (!json.length) throw new Error("No data rows found in the first sheet.");
+
+                allData = json.map((r, i) => {
+                    const get = (re) => {
+                        const k = Object.keys(r).find(k => k && re.test(k.toString().trim()));
+                        return k ? r[k] : '';
+                    };
+
+                    return {
+                        id: i,
+                        title: get(/^Title$/i) || get(/title|name|document/i) || "Untitled Document",
+                        summary: get(/^Summary$/i) || get(/summary|abstract|desc/i) || "No summary available.",
+                        contentType: get(/^Content Type$/i) || get(/content type|type/i) || "Document",
+                        subsector: get(/^Subsector$/i) || get(/subsector|sector/i) || "General",
+                        state: get(/^State$/i) || get(/state|region|location/i) || "N/A",
+                        org: get(/^Organisation$/i) || get(/organisation|org|agency/i) || "NITI Aayog",
+                        year: get(/^Year$/i) || get(/year|published/i) || "N/A",
+                        lan: get(/^Language$/i) || get(/lan|language/i) || "English",
+                        keywords: (get(/^Keywords$/i) || get(/tag|keyword|topic/i) || "").toString().split(/[,;]/).map(t => t.trim()).filter(t => t),
+                        pdf: get(/^PDF_Path$/i) || get(/pdf|file|link/i) || ""
+                    };
+                });
+
+                localStorage.setItem('policy_tracker_vITI', JSON.stringify(allData));
+                updateUI();
+                return true;
+            } catch (e) {
+                console.error("Processing error:", e);
+                document.getElementById('statusMsg').innerHTML = `<span style="color:var(--danger)">Processing Error: ${e.message}</span>`;
+                return false;
+            }
+        }
+
+        function updateUI(msg) {
+            if (msg) document.getElementById('statusMsg').innerText = msg;
+            renderFilters();
+            renderGrid();
+        }
+
+        function renderFilters() {
+            if (!allData.length) return;
+            const getUniques = (key) => ['All', ...new Set(allData.map(d => d[key]))].sort();
+
+            const renderSelect = (id, key, filterKey) => {
+                const uniques = getUniques(key);
+                document.getElementById(id).innerHTML = uniques.map(v => `<option value="${v}" ${filters[filterKey] === v ? 'selected' : ''}>${v}</option>`).join('');
+            };
+
+            const renderList = (id, key, filterKey, icon) => {
+                const uniques = getUniques(key);
+                document.getElementById(id).innerHTML = uniques.map(v => `
+                    <div class="filter-item ${filters[filterKey] === v ? 'active' : ''}" onclick="setFilter('${filterKey}', '${v}')">
+                        ${icon ? `<i data-lucide="${icon}" size="12"></i>` : ''} <span>${v}</span>
+                    </div>
+                `).join('');
+            };
+
+            renderSelect('orgFilter', 'org', 'org');
+            renderSelect('subsectorFilter', 'subsector', 'sub');
+            renderSelect('stateFilter', 'state', 'state');
+            renderSelect('yearFilter', 'year', 'year');
+            renderList('typeFilters', 'contentType', 'type', 'file-text');
+            renderList('lanFilters', 'lan', 'lan', 'globe');
+
+            // Keywords (Tags)
+            const allKeywords = [...new Set(allData.flatMap(d => d.keywords))].sort();
+            document.getElementById('tagFilters').innerHTML = allKeywords.map(t => `
+                <span class="tag" style="cursor:pointer; ${filters.tags.includes(t) ? 'background:var(--primary); color:white;' : ''}" onclick="toggleTag('${t}')">${t}</span>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function renderGrid() {
+            const filtered = allData.filter(d => {
+                const mOrg = filters.org === 'All' || d.org === filters.org;
+                const mSub = filters.sub === 'All' || d.subsector === filters.sub;
+                const mState = filters.state === 'All' || d.state === filters.state;
+                const mType = filters.type === 'All' || d.contentType === filters.type;
+                const mLan = filters.lan === 'All' || d.lan === filters.lan;
+                const mYear = filters.year === 'All' || d.year.toString() === filters.year.toString();
+                const mSearch = d.title.toLowerCase().includes(filters.search.toLowerCase()) || d.summary.toLowerCase().includes(filters.search.toLowerCase());
+                const mTags = filters.tags.length === 0 || filters.tags.every(t => d.keywords.includes(t));
+                return mOrg && mSub && mState && mType && mLan && mYear && mSearch && mTags;
+            });
+
+            document.getElementById('resultCount').innerText = `${filtered.length} Results`;
+            const grid = document.getElementById('policyGrid');
+
+            if (!filtered.length && allData.length > 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-secondary);">No policies matching filters.</div>`;
+                return;
+            } else if (!allData.length) {
+                renderEmpty();
+                return;
+            }
+
+            grid.innerHTML = filtered.map(d => `
+                <div class="card">
+                    <div class="card-header">
+                        <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
+                            <span class="badge badge-org" title="Organisation">${d.org}</span>
+                            <span class="badge badge-type" title="Content Type">${d.contentType}</span>
+                            <span class="badge badge-sector" title="Subsector">${d.subsector}</span>
+                            <span class="badge badge-state" title="State">${d.state}</span>
+                            <span class="badge badge-lan" title="Language">${d.lan}</span>
+                            <span class="badge badge-year" title="Year">${d.year}</span>
+                        </div>
+                    </div>
+                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); line-height: 1.4;">${d.title}</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${d.summary}</p>
+                    <div class="tag-list">
+                        ${d.keywords.map(t => `<span class="tag">${t}</span>`).join('')}
+                    </div>
+                    <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary" style="flex: 1;" onclick="openPdf('${d.pdf}')">
+                            <i data-lucide="eye" size="14"></i> View Policy
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // Actions
+        window.setFilter = (k, v) => { filters[k] = v; updateUI(); }
+        window.toggleTag = (t) => {
+            const i = filters.tags.indexOf(t);
+            if (i > -1) filters.tags.splice(i, 1); else filters.tags.push(t);
+            updateUI();
+        }
+        document.getElementById('orgFilter').onchange = (e) => setFilter('org', e.target.value);
+        document.getElementById('subsectorFilter').onchange = (e) => setFilter('sub', e.target.value);
+        document.getElementById('stateFilter').onchange = (e) => setFilter('state', e.target.value);
+        document.getElementById('yearFilter').onchange = (e) => setFilter('year', e.target.value);
+        document.getElementById('searchInput').oninput = (e) => setFilter('search', e.target.value);
+        window.clearFilters = () => { filters = { org: 'All', sub: 'All', state: 'All', type: 'All', lan: 'All', year: 'All', search: '', tags: [] }; updateUI(); }
+
+        document.getElementById('fileInput').onchange = (e) => {
+            const f = e.target.files[0];
+            if (f) {
+                console.log("Reading file:", f.name);
+                const r = new FileReader();
+                r.onload = (evt) => {
+                    const success = processData(evt.target.result);
+                    if (success) updateUI("Successfully uploaded: " + f.name);
+                };
+                r.onerror = (err) => {
+                    console.error("FileReader error:", err);
+                    document.getElementById('statusMsg').innerHTML = `<span style="color:var(--danger)">File Read Error</span>`;
+                };
+                r.readAsArrayBuffer(f);
+            }
+        };
+
+        window.openPdf = (f) => {
+            if (!f) return alert("No link found in Excel (check PDF_Path column)");
+            const url = f.startsWith('http') ? f : `./pdfs/${f}`;
+            document.getElementById('pdfFrame').src = url;
+            document.getElementById('modalOverlay').style.display = 'flex';
+        };
+        window.closeModal = () => { document.getElementById('modalOverlay').style.display = 'none'; document.getElementById('pdfFrame').src = ''; };
+
+        function renderEmpty() {
+            document.getElementById('resultCount').innerText = "0 Results";
+            document.getElementById('policyGrid').innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 5rem; color: var(--text-secondary);"><i data-lucide="info" size="48" style="margin-bottom:1rem; opacity:0.5;"></i><h2>No Data Loaded</h2><p>Please use the <b>Manual Upload</b> button below to select your <code>data.xlsx</code> file.</p></div>`;
+            lucide.createIcons();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
